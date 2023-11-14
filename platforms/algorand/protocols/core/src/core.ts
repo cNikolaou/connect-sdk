@@ -75,17 +75,14 @@ export class AlgorandWormholeCore implements WormholeCore<'Algorand'> {
   }
 
   async parseTransaction(txid: TxHash): Promise<WormholeMessageId[]> {
-    console.log('Txid: ', txid);
     const result = await this.connection
       .pendingTransactionInformation(txid)
       .do();
-    console.log('Result: ', result);
 
     // QUESTIONBW: To make this work, I had to use the tokenBridgeAppId.  Expected?
     const emitterAddr = new UniversalAddress(
       this.getEmitterAddressAlgorand(this.tokenBridgeAppId),
     );
-    console.log('parseTransaction emitterAddr: ', emitterAddr);
 
     const sequence = this.parseSequenceFromLogAlgorand(result);
     console.log('sequence: ', sequence);

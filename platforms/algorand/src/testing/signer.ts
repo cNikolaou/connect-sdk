@@ -45,20 +45,27 @@ export class AlgorandSigner implements SignOnlySigner {
     });
 
     for (const algoUnsignedTxn of groupedAlgoUnsignedTxns) {
-      const { description, transaction: tsp } = algoUnsignedTxn;
+      const { transaction: tsp } = algoUnsignedTxn;
       const { tx, signer } = tsp;
 
       if (signer) {
-        console.log(
-          `Signing: ${description} transaction ${tx._getDictForDisplay()} with signer ${
-            signer.addr
-          } for address ${this.address()}`,
-        );
+        console.log(tx.txID());
+        //tx.appArgs.forEach((val) => console.log(encoding.b64.encode(val)));
+        //console.log(
+        //  `Signing: ${description} transaction ${encoding.b64.encode(
+        //    tx.toByte(),
+        //  )} with signer ${signer.addr} for address ${this.address()}`,
+        //);
         signed.push(await signer.signTxn(tx));
       } else {
-        console.log(
-          `Signing: ${description} transaction ${tx._getDictForDisplay()} with signer ${this.address()} for address ${this.address()}`,
-        );
+        console.log(tx.txID());
+        //tx.appArgs.forEach((val) => console.log(encoding.b64.encode(val)));
+        //console.log(
+        //  `Signing: ${description} transaction ${encoding.b64.encode(
+        //    tx.toByte(),
+        //  )} with signer ${this.address()} for address ${this.address()}`,
+        //);
+        console.log(tx.appArgs[0]);
         signed.push(tx.signTxn(this._account.sk));
       }
     }

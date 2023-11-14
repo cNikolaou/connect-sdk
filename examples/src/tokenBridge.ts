@@ -41,8 +41,8 @@ import { bigIntToBytes } from "algosdk";
   // Choose your adventure
 
   // Test native Algo outbound
-  // const amt = normalizeAmount("0.01", sendChain.config.nativeTokenDecimals);
-  // await manualTokenTransfer(wh, "native", amt, source, destination);
+  //const amt = normalizeAmount("0.01", sendChain.config.nativeTokenDecimals);
+  //await manualTokenTransfer(wh, "native", amt, source, destination);
 
   //Test Algorand ASA outbound
   // const asa: TokenId = {
@@ -53,12 +53,12 @@ import { bigIntToBytes } from "algosdk";
   // await manualTokenTransfer(wh, asa, amt, source, destination);
 
   // Test token inbound to Algorand
-  const asa: TokenId = {
-    chain: "Avalanche",
-    address: new UniversalAddress("0x12EB0d635FD4C5692d779755Ba82b33F6439fc73", "hex"), // Testnet Wrapped USDC from Algorand
-  };
-  const amt = normalizeAmount("0.0001", BigInt(6));
-  await manualTokenTransfer(wh, asa, amt, source, destination);
+  // const asa: TokenId = {
+  //   chain: "Avalanche",
+  //   address: new UniversalAddress("0x12EB0d635FD4C5692d779755Ba82b33F6439fc73", "hex"), // Testnet Wrapped USDC from Algorand
+  // };
+  // const amt = normalizeAmount("0.0001", BigInt(6));
+  // await manualTokenTransfer(wh, asa, amt, source, destination);
 
   // await automaticTokenTransfer(wh, "native", 100_000_000n, source, destination);
   // await automaticTokenTransferWithGasDropoff(
@@ -84,12 +84,12 @@ import { bigIntToBytes } from "algosdk";
   // );
 
   // Or pick up where you left off given the source transaction
-  // await finishTransfer(
-  //   wh,
-  //   sendChain.chain,
-  //   "0x667f7cb46bc5c76c19d196118cda79319b22748d42379e9f6f60448c29f25b6e",
-  //   destination.signer,
-  // );
+  await finishTransfer(
+    wh,
+    sendChain.chain,
+    "0x5d363eb7249efbeb5dbae5a26a5930fe5343b19c08219b85fafb8e54bd957931",
+    destination.signer,
+  );
 })();
 
 async function tokenTransfer(

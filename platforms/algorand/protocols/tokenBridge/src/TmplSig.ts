@@ -2,14 +2,15 @@ import { Algodv2, LogicSigAccount } from 'algosdk';
 import { id } from 'ethers';
 import { encodeHex } from './BigVarint';
 import { hexToUint8Array } from './utilities';
+import { encoding } from '@wormhole-foundation/connect-sdk';
 
 // This is the data structure to be populated in the call to populate() below
 // Yes, it needs to be filled out before calling populate()
 interface IPopulateData {
   appId: bigint;
   appAddress: string;
-  addrIdx: bigint;
-  emitterId: string;
+  memoryIndex: bigint;
+  emitterAddress: string;
 }
 export type PopulateData = Required<IPopulateData>;
 
@@ -41,12 +42,13 @@ export class TmplSig {
    */
 
   async populate(data: PopulateData): Promise<LogicSigAccount> {
+    const emitterAddr = encoding.stripPrefix('0x', data.emitterAddress);
     const byteString: string = [
       '0620010181',
-      encodeHex(data.addrIdx),
+      encodeHex(data.memoryIndex),
       '4880',
-      encodeHex(BigInt(data.emitterId.length / 2)),
-      data.emitterId,
+      encodeHex(BigInt(emitterAddr.length / 2)),
+      emitterAddr,
       '483110810612443119221244311881',
       encodeHex(data.appId),
       '1244312080',
@@ -54,6 +56,9 @@ export class TmplSig {
       data.appAddress,
       '124431018100124431093203124431153203124422',
     ].join('');
+
+    console.log(byteString);
+
     this.bytecode = hexToUint8Array(byteString);
     return new LogicSigAccount(this.bytecode);
   }

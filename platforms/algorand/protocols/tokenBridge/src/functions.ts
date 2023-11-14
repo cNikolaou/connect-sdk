@@ -3,6 +3,8 @@ import {
   ChainId,
   toChainId,
   UniversalAddress,
+  deserialize,
+  VAA,
 } from '@wormhole-foundation/connect-sdk';
 import {
   CHAIN_ID_ALGORAND,
@@ -33,16 +35,14 @@ import {
 } from './utilities';
 import { PopulateData, TmplSig } from './TmplSig';
 import { OptInResult, WormholeWrappedInfo } from './types';
-import { _parseVAAAlgorand, _submitVAAAlgorand } from './vaa';
+import { _submitVAAAlgorand } from './vaa';
 
 const accountExistsCache = new Set<[bigint, string]>();
 
 export function getEmitterAddressAlgorand(appId: bigint): string {
-  console.log('appId: ', appId);
   const appAddr: string = getApplicationAddress(appId);
   const decAppAddr: Uint8Array = decodeAddress(appAddr).publicKey;
   const hexAppAddr: string = uint8ArrayToHex(decAppAddr);
-  console.log('functions.ts Emitter address: ', hexAppAddr);
   return hexAppAddr;
 }
 
@@ -51,7 +51,7 @@ export async function createWrappedOnAlgorand(
   tokenBridgeId: bigint,
   bridgeId: bigint,
   senderAddr: string,
-  attestVAA: Uint8Array,
+  attestVAA: VAA<'TokenBridge:AttestMeta'>,
 ): Promise<TransactionSignerPair[]> {
   return await _submitVAAAlgorand(
     client,
@@ -220,10 +220,10 @@ export async function getIsTransferCompletedAlgorand(
   appId: bigint,
   signedVAA: Uint8Array,
 ): Promise<boolean> {
-  const parsedVAA = _parseVAAAlgorand(signedVAA); // TODO: rip this out and look for deserialize('TokenBridge:Attestation', bytes)
+  const parsedVAA = deserialize('TokenBridge:Transfer', signedVAA);
   const seq: bigint = parsedVAA.sequence;
-  const chainRaw: string = parsedVAA.chainRaw; // this needs to be a hex string
-  const em: string = parsedVAA.emitter; // this needs to be a hex string
+  const chainRaw: string = parsedVAA.emitterChain; // this needs to be a hex string
+  const em: string = parsedVAA.emitterAddress.toString(); // this needs to be a hex string
   const { doesExist, lsa } = await calcLogicSigAccount(
     client,
     appId,
@@ -421,20 +421,19 @@ export type LogicSigAccountInfo = {
 export async function calcLogicSigAccount(
   client: Algodv2,
   appId: bigint,
-  appIndex: bigint,
-  emitterId: string,
+  memoryIndex: bigint,
+  emitterAddress: string,
 ): Promise<LogicSigAccountInfo> {
   let data: PopulateData = {
-    addrIdx: appIndex,
+    appId,
     appAddress: getEmitterAddressAlgorand(appId),
-    appId: appId,
-    emitterId: emitterId,
+    memoryIndex,
+    emitterAddress,
   };
 
   const ts: TmplSig = new TmplSig(client);
   const lsa: LogicSigAccount = await ts.populate(data);
   const sigAddr: string = lsa.address();
-
   const doesExist: boolean = await accountExists(client, appId, sigAddr);
   return {
     lsa,
@@ -455,8 +454,8 @@ export async function optin(
   client: Algodv2,
   senderAddr: string,
   appId: bigint,
-  appIndex: bigint,
-  emitterId: string,
+  emitterId: bigint,
+  emitterAddress: string,
 ): Promise<OptInResult> {
   const appAddr: string = getApplicationAddress(appId);
 
@@ -464,10 +463,11 @@ export async function optin(
   const { doesExist, lsa } = await calcLogicSigAccount(
     client,
     appId,
-    appIndex,
     emitterId,
+    emitterAddress,
   );
   const sigAddr: string = lsa.address();
+
   let txs: TransactionSignerPair[] = [];
   if (!doesExist) {
     // These are the suggested params from the system
@@ -498,6 +498,7 @@ export async function optin(
 
     accountExistsCache.add([appId, lsa.address()]);
   }
+
   return {
     addr: sigAddr,
     txs,
@@ -743,29 +744,4 @@ export async function transferFromAlgorand(
   acTxn.fee *= 2;
   txs.push({ tx: acTxn, signer: null });
   return txs;
-}
-
-/**
- * This basically just submits the VAA to Algorand
- * @param client AlgodV2 client
- * @param tokenBridgeId Token bridge ID
- * @param bridgeId Core bridge ID
- * @param vaa The VAA to be redeemed
- * @param acct Sending account
- * @returns Promise with array of TransactionSignerPair
- */
-export async function redeemOnAlgorand(
-  client: Algodv2,
-  tokenBridgeId: bigint,
-  bridgeId: bigint,
-  vaa: Uint8Array,
-  senderAddr: string,
-): Promise<TransactionSignerPair[]> {
-  return await _submitVAAAlgorand(
-    client,
-    tokenBridgeId,
-    bridgeId,
-    vaa,
-    senderAddr,
-  );
 }

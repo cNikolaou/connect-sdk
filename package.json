@@ -40,7 +40,6 @@
   "workspaces": [
     "core/base",
     "core/definitions",
-    "core/tokenRegistry",
     "connect",
     "examples",
     "platforms/algorand",

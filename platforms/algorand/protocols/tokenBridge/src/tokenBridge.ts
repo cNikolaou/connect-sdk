@@ -37,10 +37,9 @@ import {
   getIsTransferCompletedAlgorand,
   getIsWrappedAssetOnAlgorand,
   getOriginalAssetOffAlgorand,
-  redeemOnAlgorand,
   transferFromAlgorand,
 } from './functions';
-import { submitVAAHeader } from './vaa';
+import { _submitVAAAlgorand, submitVAAHeader } from './vaa';
 
 export class AlgorandTokenBridge implements TokenBridge<'Algorand'> {
   readonly chainId: ChainId;
@@ -217,7 +216,7 @@ export class AlgorandTokenBridge implements TokenBridge<'Algorand'> {
     const { txs } = await submitVAAHeader(
       this.connection,
       this.tokenBridgeAppId,
-      serialize(vaa), // TODO: serialize(vaa) instead of vaa.hash here
+      vaa,
       senderAddr,
       this.coreAppId,
     );
@@ -308,11 +307,11 @@ export class AlgorandTokenBridge implements TokenBridge<'Algorand'> {
   ): AsyncGenerator<UnsignedTransaction> {
     const senderAddr = new AlgorandAddress(sender.toString()).toString();
 
-    const utxns = await redeemOnAlgorand(
+    const utxns = await _submitVAAAlgorand(
       this.connection,
       this.tokenBridgeAppId,
       this.coreAppId,
-      serialize(vaa),
+      vaa,
       senderAddr,
     );
 
