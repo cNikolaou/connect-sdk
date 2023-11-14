@@ -199,6 +199,27 @@ export async function submitVAAHeader(
   return new SubmitVAAState(vaa, accts, txs, guardianAddr);
 }
 
+function makeNoOps(
+  address: string,
+  appid: bigint,
+  params: SuggestedParams,
+  num: number,
+): TransactionSignerPair[] {
+  const noops = [];
+  for (let i = 0; i < num; i++) {
+    noops.push({
+      tx: makeApplicationCallTxnFromObject({
+        appArgs: [textToUint8Array('nop'), new Uint8Array([i])],
+        appIndex: safeBigIntToNumber(appid),
+        from: address,
+        onComplete: OnApplicationComplete.NoOpOC,
+        suggestedParams: params,
+      }),
+    });
+  }
+  return noops as TransactionSignerPair[];
+}
+
 /**
  * Submits the VAA to the application
  * @param client AlgodV2 client
@@ -351,31 +372,8 @@ export async function _submitVAAAlgorand(
       }),
       signer: null,
     });
-    let buf: Uint8Array = new Uint8Array(1);
-    buf[0] = 0x01;
-    txs.push({
-      tx: makeApplicationCallTxnFromObject({
-        appArgs: [textToUint8Array('nop'), buf],
-        appIndex: safeBigIntToNumber(tokenBridgeId),
-        from: senderAddr,
-        onComplete: OnApplicationComplete.NoOpOC,
-        suggestedParams: params,
-      }),
-      signer: null,
-    });
 
-    buf = new Uint8Array(1);
-    buf[0] = 0x02;
-    txs.push({
-      tx: makeApplicationCallTxnFromObject({
-        appArgs: [textToUint8Array('nop'), buf],
-        appIndex: safeBigIntToNumber(tokenBridgeId),
-        from: senderAddr,
-        onComplete: OnApplicationComplete.NoOpOC,
-        suggestedParams: params,
-      }),
-      signer: null,
-    });
+    txs.push(...makeNoOps(senderAddr, tokenBridgeId, params, 2));
 
     txs.push({
       tx: makeApplicationCallTxnFromObject({
@@ -466,6 +464,7 @@ export async function _submitVAAAlgorand(
       }),
       signer: null,
     });
+    txs.push(...makeNoOps(senderAddr, tokenBridgeId, params, 2));
 
     // We need to cover the inner transactions
     if (
