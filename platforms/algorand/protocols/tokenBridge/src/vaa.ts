@@ -81,7 +81,7 @@ export async function submitVAAHeader(
   const em: string = vaa.emitterAddress.toString().slice(2);
   const chainId: string = BigInt(toChainId(vaa.emitterChain))
     .toString(16)
-    .padStart(2, '0');
+    .padStart(4, '0');
   console.log(em, chainId);
 
   let txs: TransactionSignerPair[] = [];
